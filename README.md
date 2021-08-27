@@ -73,33 +73,60 @@ We assume nvidia-docker is already installed in your system.
 To build the CuLE image you can use the following docker file - create a file named "Dockerfile" in your preferred folder and copy the following text into it:
 
 ```
-FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04 as base
-RUN apt-get update
-RUN apt-get install -y python3.6
-RUN apt-get install -y python3-pip
-RUN ln -s /usr/bin/python3.6 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
-RUN apt-get -y install git
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 
-RUN pip install torch==1.2.0
-RUN pip install torchvision==0.4.0
+RUN apt-get -y update -qq && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        clang \
+        gcc-5 \
+        cmake \
+        htop \
+        curl \
+        git \
+        libomp-dev \
+        libsm6 \
+        libssl-dev \
+        libxrender-dev \
+        libxext-dev \
+        libz-dev \
+        iproute2 \
+        module-init-tools \
+        python3.6 \
+        python3-dev \
+        python3-setuptools \
+        python3-pip \
+        vim \
+        ssh \
+        wget \
+        vim \
+        zip \
+    && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/bin/python3.6 /usr/bin/python && \
+    ln -s /usr/bin/pip3 /usr/bin/pip
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"
 
-RUN pip install psutil
-RUN pip install pytz
-RUN pip install tqdm
-RUN pip install atari_py
+RUN pip install --upgrade cython \
+                          cloudpickle \
+                          gym[atari] \
+                          opencv-python==4.2.0.34 \
+                          psutil \
+                          tensorflow \
+                          tensorboard \
+                          tensorboardX \
+                          torch==1.2.0 \
+                          torchvision==0.4.0 \
+                          tqdm && \
+    git clone https://github.com/NVIDIA/apex && \
+    cd apex && \
+    git checkout f3a960f80244cf9e80558ab30f7f7e8cbf03c0a0 && \
+    pip install --upgrade pip && \
+    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
 
-RUN git clone https://github.com/NVIDIA/apex
-RUN pip install --upgrade pip
-RUN cd apex && pip install -v --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-
-RUN apt-get install -y libsm6 libxrender-dev
-RUN pip install opencv-python
-
-RUN pip install cython
-RUN apt-get install zlib1g-dev
-RUN git clone --recursive https://github.com/NVLabs/cule
-RUN cd cule && python setup.py install
+RUN git clone --recursive https://github.com/aypan17/cule && \
+    cd cule && \
+    python setup.py install
 ```
 
 Once the docker file has been created and saved, you can build the docker image by typing (in the same folder of the docker file):
