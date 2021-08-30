@@ -245,7 +245,7 @@ def worker(gpu, ngpus_per_node, args):
                 # https://github.com/pytorch/pytorch/issues/7014
                 torch.cuda.current_stream().synchronize()
                 observation, reward, done, info = train_env.step(maybe_npy(probs_action))
-                ram = train_env.ram()
+                print(train_env.ram)
                 assert False
 
                 if args.use_openai:
