@@ -66,6 +66,8 @@ def worker(gpu, ngpus_per_node, args):
     model = ActorCritic(args.num_stack, train_env.action_space, normalize=args.normalize, name=args.env_name)
     model, optimizer = model_initialize(args, model, train_device)
 
+    wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
+
     if (args.num_ales % args.num_minibatches) != 0:
         raise ValueError('Number of ales({}) size is not even divisible by the minibatch size({})'.format(
             args.num_ales, args.num_minibatches))
@@ -118,7 +120,7 @@ def worker(gpu, ngpus_per_node, args):
         total_time = 0
         evaluation_offset = 0
     
-    wandb.init(project='test-space', entity='aypan17', group='atari')
+    
     
     # benchmark - random
     if args.benchmark:
