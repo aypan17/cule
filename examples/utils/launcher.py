@@ -37,6 +37,7 @@ def add_global_parser_options(parser):
     parser.add_argument('--lr', type=float, default=0.00065, help='learning rate (default: 0.00065)')
     parser.add_argument('--max-episode-length', type=int, default=18000, help='maximum length of an episode (default: 18,000)')
     parser.add_argument('--max-grad-norm', type=float, default=0.5, help='max norm of gradients (default: 0.5)')
+    parser.add_argument('--model_name', type=str, default="model", help='save name of model')
     parser.add_argument('--multiprocessing-distributed', action='store_true',
                         help='Use multi-processing distributed training to launch '
                              'N processes per node, which has N GPUs. This is the '
