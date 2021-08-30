@@ -30,6 +30,9 @@ def worker(remote, parent_remote, env_fn_wrapper):
             if done:
                 ob = env.reset()
             remote.send((ob, reward, done, info))
+        elif cmd == 'ram':
+            ram = env.unwrapped._get_ram()
+            remote.send(ram)
         elif cmd == 'reset':
             ob = env.reset()
             remote.send(ob)
@@ -85,6 +88,11 @@ class SubprocVecEnv(VecEnv):
         results = [remote.recv() for remote in self.remotes]
         obs, rews, dones, infos = zip(*results)
         return np.stack(obs), np.stack(rews), np.stack(dones), infos
+
+    def ram(self):
+        for remote in self.remotes:
+            remote.send(('ram', None))
+        return np.stack([remote.recv() for remote in self.remotes])
 
     def reset(self):
         for remote in self.remotes:
