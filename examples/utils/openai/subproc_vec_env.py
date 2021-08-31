@@ -1,6 +1,33 @@
 import numpy as np
 from multiprocessing import Process, Pipe
 
+def tile_images(img_nhwc):
+    """
+    Tile N images into one big PxQ image
+    (P,Q) are chosen to be as close as possible, and if N
+    is square, then P=Q.
+    input: img_nhwc, list or array of images, ndim=4 once turned into array
+        n = batch index, h = height, w = width, c = channel
+    returns:
+        bigim_HWc, ndarray with ndim=3
+    """
+    img_nhwc = np.asarray(img_nhwc)
+    N, h, w, c = img_nhwc.shape
+    H = int(np.ceil(np.sqrt(N)))
+    W = int(np.ceil(float(N)/H))
+    img_nhwc = np.array(list(img_nhwc) + [img_nhwc[0]*0 for _ in range(N, H*W)])
+    img_HWhwc = img_nhwc.reshape(H, W, h, w, c)
+    img_HhWwc = img_HWhwc.transpose(0, 2, 1, 3, 4)
+    img_Hh_Ww_c = img_HhWwc.reshape(H*h, W*w, c)
+    return img_Hh_Ww_c
+
+def _flatten_list(l):
+    assert isinstance(l, (list, tuple))
+    assert len(l) > 0
+    assert all([len(l_) > 0 for l_ in l])
+
+    return [l__ for l_ in l for l__ in l_]
+
 class VecEnv(object):
     """
     Vectorized environment base class
@@ -20,6 +47,23 @@ class VecEnv(object):
     def close(self):
         pass
 
+    def render(self, mode='human'):
+        imgs = self.get_images()
+        bigimg = tile_images(imgs)
+        if mode == 'human':
+            self.get_viewer().imshow(bigimg)
+            return self.get_viewer().isopen
+        elif mode == 'rgb_array':
+            return bigimg
+        else:
+            raise NotImplementedError
+
+    def get_viewer(self):
+        if self.viewer is None:
+            from gym.envs.classic_control import rendering
+            self.viewer = rendering.SimpleImageViewer()
+        return self.viewer
+
 def worker(remote, parent_remote, env_fn_wrapper):
     parent_remote.close()
     env = env_fn_wrapper.x()
@@ -33,6 +77,8 @@ def worker(remote, parent_remote, env_fn_wrapper):
         elif cmd == 'ram':
             ram = env.unwrapped._get_ram()
             remote.send(ram)
+        elif cmd == 'render':
+            remote.send([env.render(mode='rgb_array') for env in envs])
         elif cmd == 'reset':
             ob = env.reset()
             remote.send(ob)
@@ -113,6 +159,14 @@ class SubprocVecEnv(VecEnv):
         for p in self.ps:
             p.join()
         self.closed = True
+
+    def get_images(self):
+        self._assert_not_closed()
+        for pipe in self.remotes:
+            pipe.send(('render', None))
+        imgs = [pipe.recv() for pipe in self.remotes]
+        imgs = _flatten_list(imgs)
+        return imgs
 
     @property
     def num_envs(self):
