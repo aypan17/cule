@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     model = ActorCritic(num_stack, env.action_space)
     if args.model_path is not None:
-        model.load(args.model_path)
+        model.load(args.model_path, map_location='cpu')
     model.eval()
 
     test(args, model, env)

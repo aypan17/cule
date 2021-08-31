@@ -26,7 +26,6 @@ def callback(args, model, frames, iter_time, rewards, lengths,
     if frames >= last_save:
         last_save += args.save_interval
 
-        model.to('cpu')
         torch.save(model.state_dict(), args.model_name)
 
         if csv_writer and csv_file:
