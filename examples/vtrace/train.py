@@ -97,9 +97,6 @@ def worker(gpu, ngpus_per_node, args):
     masks = torch.zeros(shape, device=train_device, dtype=torch.float32)
     actions = torch.zeros(shape, device=train_device, dtype=torch.long)
 
-    shape = (args.num_steps, args.num_ales, 255)
-    ram = torch.zeros(shape, device=train_device, dtype=torch.long)
-
     mus = torch.ones(shape, device=train_device, dtype=torch.float32)
     # pis = torch.zeros(shape, device=train_device, dtype=torch.float32)
     rhos = torch.zeros((args.num_steps, minibatch_size), device=train_device, dtype=torch.float32)
@@ -245,8 +242,6 @@ def worker(gpu, ngpus_per_node, args):
                 # https://github.com/pytorch/pytorch/issues/7014
                 torch.cuda.current_stream().synchronize()
                 observation, reward, done, info = train_env.step(maybe_npy(probs_action))
-                print(train_env.ram)
-                assert False
 
                 if args.use_openai:
                     # convert back to pytorch tensors
