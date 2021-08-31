@@ -78,7 +78,7 @@ def worker(remote, parent_remote, env_fn_wrapper):
             ram = env.unwrapped._get_ram()
             remote.send(ram)
         elif cmd == 'render':
-            remote.send([env.render(mode='rgb_array') for env in envs])
+            remote.send(env.render(mode='rgb_array'))
         elif cmd == 'reset':
             ob = env.reset()
             remote.send(ob)
