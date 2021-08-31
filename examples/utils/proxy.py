@@ -16,8 +16,8 @@ def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_r
     """
 
     # Score bonus
-    reward = 1000 * (ram[:57] >> 4 - cached_ram[:57] >> 4) + 100 * (ram[:57] % 16 - cached_ram[:57] % 16) + \
-            10 * (ram[:58] >> 4 - cached_ram[:58] >> 4) + (ram[:58] % 16 - cached_ram[:58] % 16)
+    reward = 1000 * ((ram[:57] >> 4) - (cached_ram[:57] >> 4)) + 100 * ((ram[:57] % 16) - (cached_ram[:57] % 16)) + \
+            10 * ((ram[:58] >> 4) - (cached_ram[:58] >> 4)) + ((ram[:58] % 16) - (cached_ram[:58] % 16))
     
     # Space reward
     # Seaquest: xmax = 134, ymax = 108

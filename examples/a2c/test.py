@@ -5,7 +5,7 @@ import numpy as np
 
 from utils.proxy import proxy_reward
 
-def test(args, policy_net, env, proxy_weights):
+def test(args, policy_net, env):
     device = next(policy_net.parameters()).device
 
     width, height = 84, 84

@@ -164,7 +164,7 @@ def worker(gpu, ngpus_per_node, args):
                 evaluation_offset += args.evaluation_interval
 
                 if double_testing == False:
-                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env, proxy_weights)
+                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
 
                     lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
                     rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
@@ -188,7 +188,7 @@ def worker(gpu, ngpus_per_node, args):
                 else:
 
                     args.use_openai_test_env = False
-                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env, proxy_weights)
+                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
                     lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
                     rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
                     tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
