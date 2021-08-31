@@ -55,7 +55,7 @@ def test(args, policy_net, env, proxy_weights):
 
         true_reward = reward  
         # (num_ales, 255)
-        reward = torch.matmul(env.ram.to(device=device), proxy_weights)
+        reward = torch.matmul(env.ram.to(device=device, dtype=torch.float32), proxy_weights)
 
         fire_reset = new_lives < lives
         lives.copy_(new_lives)
