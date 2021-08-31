@@ -120,7 +120,7 @@ def worker(gpu, ngpus_per_node, args):
     #                  num_lives=59,
     #                  divers_collected_count=62)
 
-    proxy_weights = torch.zeros(255, device=train_device, dtype=torch.float32)
+    proxy_weights = torch.zeros(128, device=train_device, dtype=torch.float32)
     proxy_weights[102] = 1 
     proxy_weights[59] = 10 
     proxy_weights[62] = 10
@@ -275,7 +275,7 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.squeeze(-1).unsqueeze(1)
 
                 true_reward = reward  
-                # (num_ales, 255)
+                # (num_ales, 128)
                 reward = torch.matmul(train_env.ram, proxy_weights)
 
                 # move back to training memory
