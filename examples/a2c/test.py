@@ -69,7 +69,7 @@ def test(args, policy_net, env, proxy_weights):
         # update episodic reward counters
         lengths += not_done.int()
         rewards += reward.cpu() * not_done.float().cpu()
-        true_rewards += true_reward.cpu() * not_done.float().cpu*()
+        true_rewards += true_reward.cpu() * not_done.float().cpu()
 
         all_done |= done.cpu()
         all_done |= (lengths >= args.max_episode_length)
