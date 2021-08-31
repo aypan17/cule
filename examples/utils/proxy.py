@@ -1,4 +1,5 @@
 import numpy as np 
+import torch
 
 def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_reward=False):
     """ Calculates proxy reward from cached ram and ram, both of size (ales, 128) with torch.uint8. 
