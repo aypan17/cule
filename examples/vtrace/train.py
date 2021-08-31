@@ -107,6 +107,25 @@ def worker(gpu, ngpus_per_node, args):
     episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
     final_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
 
+    # Set the values of the reward
+    # "seaquest": dict(enemy_obstacle_x=range(30, 34),
+    #                  player_x=70,
+    #                  player_y=97,
+    #                  diver_or_enemy_missile_x=range(71, 75),
+    #                  player_direction=86,
+    #                  player_missile_direction=87,
+    #                  oxygen_meter_value=102,
+    #                  player_missile_x=103,
+    #                  score=[57, 58],
+    #                  num_lives=59,
+    #                  divers_collected_count=62)
+
+    proxy_weights = torch.zeros(255, device=train_device, dtype=torch.float32)
+    proxy_weights[102] = 1 
+    proxy_weights[59] = 10 
+    proxy_weights[62] = 10
+    proxy_weights[97] = 0
+
     if args.use_gae:
         raise ValueError('GAE is not compatible with VTRACE')
 
@@ -119,8 +138,6 @@ def worker(gpu, ngpus_per_node, args):
         iterator = tqdm(iterator)
         total_time = 0
         evaluation_offset = 0
-    
-    
     
     # benchmark - random
     if args.benchmark:
@@ -165,15 +182,18 @@ def worker(gpu, ngpus_per_node, args):
                 evaluation_offset += args.evaluation_interval
 
                 if double_testing == False:
-                    eval_lengths, eval_rewards = test(args, model, test_env)
+                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
 
                     lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
                     rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
+                    tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
                     length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
                     reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
+                    true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
                     print('[training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
                     wandb.log({'eval_length_mean':lmean, 'eval_length_median':lmedian, 'eval_length_min':lmin, 'eval_length_max':lmax})
                     wandb.log({'eval_reward_mean':rmean, 'eval_reward_median':rmedian, 'eval_reward_min':rmin, 'eval_reward_max':rmax})
+                    wandb.log({'eval_true_reward_mean':tmean, 'eval_true_reward_median':tmedian, 'eval_true_reward_min':tmin, 'eval_true_reward_max':tmax})
 
                     if eval_csv_writer and eval_csv_file:
                         eval_csv_writer.writerow([T, total_time, rmean, rmedian, rmin, rmax, rstd, lmean, lmedian, lmin, lmax, lstd])
@@ -186,13 +206,16 @@ def worker(gpu, ngpus_per_node, args):
                 else:
 
                     args.use_openai_test_env = False
-                    eval_lengths, eval_rewards = test(args, model, test_env)
+                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
                     lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
                     rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
+                    tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
                     length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
                     reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
+                    true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
                     wandb.log({'eval_length_mean':lmean, 'eval_length_median':lmedian, 'eval_length_min':lmin, 'eval_length_max':lmax})
                     wandb.log({'eval_reward_mean':rmean, 'eval_reward_median':rmedian, 'eval_reward_min':rmin, 'eval_reward_max':rmax})
+                    wandb.log({'eval_true_reward_mean':tmean, 'eval_true_reward_median':tmedian, 'eval_true_reward_min':tmin, 'eval_true_reward_max':tmax})
                     print('[CuLE CPU] [training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
 
                     if eval_csv_writer and eval_csv_file:
@@ -250,6 +273,10 @@ def worker(gpu, ngpus_per_node, args):
                     done = torch.from_numpy(done.astype(np.uint8))
                 else:
                     observation = observation.squeeze(-1).unsqueeze(1)
+
+                true_reward = reward  
+                # (num_ales, 255)
+                reward = torch.matmul(train_env.ram, proxy_weights)
 
                 # move back to training memory
                 observation = observation.to(device=train_device)

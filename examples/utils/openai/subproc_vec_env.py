@@ -139,6 +139,7 @@ class SubprocVecEnv(VecEnv):
         obs, rews, dones, infos = zip(*results)
         return np.stack(obs), np.stack(rews), np.stack(dones), infos
 
+    @property
     def ram(self):
         for remote in self.remotes:
             remote.send(('ram', None))

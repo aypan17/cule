@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-def test(args, policy_net, env):
+def test(args, policy_net, env, proxy_weights):
     device = next(policy_net.parameters()).device
 
     width, height = 84, 84
@@ -16,6 +16,7 @@ def test(args, policy_net, env):
 
     lengths = torch.zeros(num_ales, dtype=torch.int32)
     rewards = torch.zeros(num_ales, dtype=torch.float32)
+    true_rewards = torch.zeros(num_ales, dtype=torch.float32)
     all_done = torch.zeros(num_ales, dtype=torch.bool)
     not_done = torch.ones(num_ales, dtype=torch.bool)
 
@@ -52,6 +53,10 @@ def test(args, policy_net, env):
         else:
             new_lives = info['ale.lives'].clone()
 
+        true_reward = reward  
+        # (num_ales, 255)
+        reward = torch.matmul(env.ram, proxy_weights)
+
         fire_reset = new_lives < lives
         lives.copy_(new_lives)
 
@@ -64,6 +69,7 @@ def test(args, policy_net, env):
         # update episodic reward counters
         lengths += not_done.int()
         rewards += reward.cpu() * not_done.float().cpu()
+        true_rewards += true_reward.cpu() * not_done.float().cpu*()
 
         all_done |= done.cpu()
         all_done |= (lengths >= args.max_episode_length)
@@ -71,4 +77,4 @@ def test(args, policy_net, env):
 
     policy_net.train()
 
-    return lengths, rewards
+    return lengths, rewards, true_rewards
