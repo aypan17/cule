@@ -274,7 +274,7 @@ def worker(gpu, ngpus_per_node, args):
                 else:
                     observation = observation.squeeze(-1).unsqueeze(1)
 
-                true_reward = reward  
+                true_reward = reward.detach().clone()  
                 # (num_ales, 128)
                 reward = torch.matmul(train_env.ram, proxy_weights)
 

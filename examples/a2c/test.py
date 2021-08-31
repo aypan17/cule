@@ -53,7 +53,7 @@ def test(args, policy_net, env, proxy_weights):
         else:
             new_lives = info['ale.lives'].clone()
 
-        true_reward = reward  
+        true_reward = reward.detach().clone()  
         # (num_ales, 128)
         reward = torch.matmul(env.ram.to(device=device, dtype=torch.float32), proxy_weights)
 
