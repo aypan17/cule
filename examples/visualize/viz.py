@@ -9,11 +9,15 @@ import sys
 import torch
 import torch.nn.functional as F
 
-from utils.openai.envs import create_vectorize_atari_env
-
 _path = os.path.abspath(os.path.pardir)
 sys.path = [os.path.join(_path, 'a2c')] + sys.path
 from model import ActorCritic
+
+_path = os.path.abspath(os.path.pardir)
+if not _path in sys.path:
+    sys.path = [_path] + sys.path
+from utils.openai.envs import create_vectorize_atari_env
+
 
 def test(args, model, env):
 
@@ -77,14 +81,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CuLE')
     parser.add_argument('game', type=str, help='Atari ROM filename')
     parser.add_argument('--num_stack', type=int, default=4, help='number of images in a stack (default: 4)')
-    parser.add_argument('--max_hostack', type=int, default=4, help='number of images in a stack (default: 4)')
-    parser.add_argument('--num-stack', type=int, default=4, help='number of images in a stack (default: 4)')
+    parser.add_argument('--max_episode_length', type=int, default=10000, help='max steps in episode')
+    parser.add_argument('--model_path', type=str, default=None, help='location of model')
     args = parser.parse_args()
     num_stack = args.num_stack
 
     env = create_vectorize_atari_env(args.game, 0, 1, episode_life=False, clip_rewards=False)
     env.reset()
-    env.eval()
 
     model = ActorCritic(num_stack, env.action_space)
     if args.model_path is not None:

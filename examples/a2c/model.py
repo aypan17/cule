@@ -78,6 +78,6 @@ class ActorCritic(nn.Module):
             name = '{}.pth'.format(self.name())
             torch.save(self.state_dict(), name)
 
-    def load(self, name=None):
-        self.load_state_dict(torch.load(name if name else self.name()))
+    def load(self, name=None, map_location='cpu'):
+        self.load_state_dict(torch.load(name if name else self.name(), map_location=map_location))
 
