@@ -42,7 +42,9 @@ def test(args, policy_net, env, proxy_weights):
         actions = F.softmax(logit, dim=1).multinomial(1).cpu()
         actions[fire_reset] = 1
 
+        cached_ram = env.ram.to(device=device, dtype=torch.float32)
         observation, reward, done, info = env.step(maybe_npy(actions))
+        ram = env.ram.to(device=device, dtype=torch.float32)
 
         if args.use_openai_test_env:
             # convert back to pytorch tensors
@@ -54,8 +56,7 @@ def test(args, policy_net, env, proxy_weights):
             new_lives = info['ale.lives'].clone()
 
         true_reward = reward.detach().clone()  
-        # (num_ales, 128)
-        reward = torch.matmul(env.ram.to(device=device, dtype=torch.float32), proxy_weights)
+        reward = torch.matmul(ram-cached_ram, proxy_weights)
 
         fire_reset = new_lives < lives
         lives.copy_(new_lives)

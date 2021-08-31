@@ -121,7 +121,7 @@ def worker(gpu, ngpus_per_node, args):
     #                  divers_collected_count=62)
 
     proxy_weights = torch.zeros(128, device=train_device, dtype=torch.float32)
-    proxy_weights[102] = 1 
+    proxy_weights[102] = .1 
     proxy_weights[59] = 10 
     proxy_weights[62] = 10
     proxy_weights[97] = 0
@@ -264,7 +264,9 @@ def worker(gpu, ngpus_per_node, args):
                 # Check if the multinomial threw an exception
                 # https://github.com/pytorch/pytorch/issues/7014
                 torch.cuda.current_stream().synchronize()
+                cached_ram = train_env.ram.to(device=train_device, dtype=torch.float32)
                 observation, reward, done, info = train_env.step(maybe_npy(probs_action))
+                ram = train_env.ram.to(device=train_device, dtype=torch.float32)
 
                 if args.use_openai:
                     # convert back to pytorch tensors
@@ -275,8 +277,7 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.squeeze(-1).unsqueeze(1)
 
                 true_reward = reward.detach().clone()  
-                # (num_ales, 128)
-                reward = torch.matmul(train_env.ram.to(device=train_device, dtype=torch.float32), proxy_weights)
+                reward = torch.matmul(ram-cached_ram, proxy_weights)
 
                 # move back to training memory
                 observation = observation.to(device=train_device)
