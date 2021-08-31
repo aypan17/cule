@@ -20,7 +20,7 @@ def weights_init(m):
 
 class ActorCritic(nn.Module):
 
-    def __init__(self, num_inputs, action_space, normalize=False, name=None):
+    def __init__(self, num_inputs, action_space, hidden_size=512, normalize=False, name=None):
         super(ActorCritic, self).__init__()
 
         self._name = name
@@ -30,10 +30,10 @@ class ActorCritic(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=3, stride=1)
 
         conv_out_size = self._get_conv_out((num_inputs, 84, 84))
-        self.linear1 = nn.Linear(in_features=conv_out_size, out_features=512)
+        self.linear1 = nn.Linear(in_features=conv_out_size, out_features=hidden_size)
 
-        self.critic_linear = nn.Linear(in_features=512, out_features=1)
-        self.actor_linear = nn.Linear(in_features=512, out_features=action_space.n)
+        self.critic_linear = nn.Linear(in_features=hidden_size, out_features=1)
+        self.actor_linear = nn.Linear(in_features=hidden_size, out_features=action_space.n)
 
         self.apply(weights_init)
 

@@ -63,7 +63,7 @@ def worker(gpu, ngpus_per_node, args):
         args.use_openai_test_env = use_openai_test_env
         args.output_filename = output_filename
 
-    model = ActorCritic(args.num_stack, train_env.action_space, normalize=args.normalize, name=args.env_name)
+    model = ActorCritic(args.num_stack, train_env.action_space, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
     model, optimizer = model_initialize(args, model, train_device)
 
     wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)

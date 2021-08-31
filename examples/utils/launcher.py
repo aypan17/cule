@@ -32,6 +32,7 @@ def add_global_parser_options(parser):
     parser.add_argument('--evaluation-episodes', type=int, default=10, help='Number of evaluation episodes to average over (default: 10)')
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor for rewards (default: 0.99)')
     parser.add_argument('--gpu', type=int, default=None, help='GPU ID (default: None)')
+    parser.add_argument('--hidden_size', type=int, default=512, help='dimension of the representation space')
     parser.add_argument('--local_rank', type=int, default=0)
     parser.add_argument('--log-dir', type=str, default='runs', help='tensorboardX log directory (default: runs)')
     parser.add_argument('--lr', type=float, default=0.00065, help='learning rate (default: 0.00065)')
