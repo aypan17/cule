@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
+from utils.proxy import proxy_reward
+
 def test(args, policy_net, env, proxy_weights):
     device = next(policy_net.parameters()).device
 
@@ -42,9 +44,9 @@ def test(args, policy_net, env, proxy_weights):
         actions = F.softmax(logit, dim=1).multinomial(1).cpu()
         actions[fire_reset] = 1
 
-        cached_ram = env.ram.to(device=device, dtype=torch.float32)
+        cached_ram = env.ram.to(device=device, dtype=torch.uint8)
         observation, reward, done, info = env.step(maybe_npy(actions))
-        ram = env.ram.to(device=device, dtype=torch.float32)
+        ram = env.ram.to(device=device, dtype=torch.uint8)
 
         if args.use_openai_test_env:
             # convert back to pytorch tensors
@@ -56,8 +58,8 @@ def test(args, policy_net, env, proxy_weights):
             new_lives = info['ale.lives'].clone()
 
         true_reward = reward.detach().clone()  
-        reward = torch.matmul(ram-cached_ram, proxy_weights)
-
+        reward = proxy_reward(ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+        
         fire_reset = new_lives < lives
         lives.copy_(new_lives)
 

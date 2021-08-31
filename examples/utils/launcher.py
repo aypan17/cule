@@ -59,6 +59,12 @@ def add_global_parser_options(parser):
     parser.add_argument('--use-openai', action='store_true', default=False, help='Use OpenAI Gym environment')
     parser.add_argument('--use-openai-test-env', action='store_true', default=False, help='Use OpenAI Gym test environment')
 
+    # Proxy rewards
+    parser.add_argument('--diver_bonus', type=float, default=0, help='reward grabbing divers')
+    parser.add_argument('--o2_penalty', type=float, default=0, help='penalize lower o2 levels')
+    parser.add_argument('--bullet_penalty', type=float, default=0, help='penalize shooting in seaquest')
+    parser.add_argument('--space_reward', action='store_true', default=False, help='only reward for points gathered in certain region')
+
     return parser
 
 def dispatch(args, worker):

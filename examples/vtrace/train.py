@@ -11,6 +11,7 @@ import torch.optim as optim
 
 from tqdm import tqdm
 from utils.initializers import args_initialize, env_initialize, log_initialize, model_initialize
+from utils.proxy import proxy_reward
 
 from a2c.helper import callback, format_time, gen_data
 from a2c.model import ActorCritic
@@ -106,25 +107,6 @@ def worker(gpu, ngpus_per_node, args):
     final_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
     episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
     final_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
-
-    # Set the values of the reward
-    # "seaquest": dict(enemy_obstacle_x=range(30, 34),
-    #                  player_x=70,
-    #                  player_y=97,
-    #                  diver_or_enemy_missile_x=range(71, 75),
-    #                  player_direction=86,
-    #                  player_missile_direction=87,
-    #                  oxygen_meter_value=102,
-    #                  player_missile_x=103,
-    #                  score=[57, 58],
-    #                  num_lives=59,
-    #                  divers_collected_count=62)
-
-    proxy_weights = torch.zeros(128, device=train_device, dtype=torch.float32)
-    proxy_weights[102] = .1 
-    proxy_weights[59] = 10 
-    proxy_weights[62] = 10
-    proxy_weights[97] = 0
 
     if args.use_gae:
         raise ValueError('GAE is not compatible with VTRACE')
@@ -277,7 +259,7 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.squeeze(-1).unsqueeze(1)
 
                 true_reward = reward.detach().clone()  
-                reward = torch.matmul(ram-cached_ram, proxy_weights)
+                reward = proxy_reward(ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
 
                 # move back to training memory
                 observation = observation.to(device=train_device)
