@@ -27,14 +27,16 @@ def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_r
             reward *= 0
 
     reward = reward.to(dtype=torch.float32)
+    ram = ram.to(dtype=torch.float32)
+    cached_ram = ram.to(dtype=torch.float32)
 
     # Diver bonus
     #reward += diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
 
     # O2 penalty
-    reward -= o2_pen * (ram[:102] - cached_ram[:102])   
+    #reward -= o2_pen * (ram[:102] - cached_ram[:102])   
 
     # Bullet penalty
-    reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
+    #reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
 
     return reward
