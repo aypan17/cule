@@ -133,11 +133,12 @@ def worker(gpu, ngpus_per_node, args):
         if args.rank == 0:
             eval_start_time = time.time()
             dqn.eval()  # Set DQN (online network) to evaluation mode
-            rewards, lengths, avg_Q = test(args, 0, dqn, val_mem, test_env, train_device)
+            rewards, lengths, avg_Q, true_rewards = test(args, 0, dqn, val_mem, test_env, train_device)
             dqn.train()  # Set DQN (online network) back to training mode
             eval_total_time = time.time() - eval_start_time
 
             rmean, rmedian, rstd, rmin, rmax = vec_stats(rewards)
+            tmean, tmedian, tstd, tmin, tmax = vec_stats(true_rewards)
             lmean, lmedian, lstd, lmin, lmax = vec_stats(lengths)
 
             print('reward: {:4.2f}, {:4.0f}, {:4.0f}, {:4.4f} | '
@@ -146,6 +147,10 @@ def worker(gpu, ngpus_per_node, args):
                   .format(rmean, rmin, rmax, rstd, lmean, lmin, lmax,
                           lstd, avg_Q, format_time(eval_total_time)),
                   flush=True)
+
+            wandb.log({'eval_length_mean':lmean, 'eval_length_median':lmedian, 'eval_length_min':lmin, 'eval_length_max':lmax})
+            wandb.log({'eval_reward_mean':rmean, 'eval_reward_median':rmedian, 'eval_reward_min':rmin, 'eval_reward_max':rmax})
+            wandb.log({'eval_true_reward_mean':tmean, 'eval_true_reward_median':tmedian, 'eval_true_reward_min':tmin, 'eval_true_reward_max':tmax})
     else:
         if args.rank == 0:
             print('Entering main training loop', flush=True)
@@ -187,6 +192,8 @@ def worker(gpu, ngpus_per_node, args):
         if args.rank == 0:
             print('complete ({})'.format(format_time(time.time() - start_time)), flush=True)
 
+        wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
+
         # These variables are used to compute average rewards for all processes.
         episode_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
         episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
@@ -213,6 +220,7 @@ def worker(gpu, ngpus_per_node, args):
         target_update_offset = 0
 
         total_time = 0
+        eval_counter = 0
 
         # main loop
         iterator = range(total_steps)
@@ -247,7 +255,9 @@ def worker(gpu, ngpus_per_node, args):
 
             with torch.cuda.stream(env_stream):
                 nvtx.range_push('train:env step')
+                cached_ram = train_env.ram.to(device=train_device, dtype=torch.float32)
                 observation, reward, done, info = train_env.step(action)  # Step
+                ram = train_env.ram.to(device=train_device, dtype=torch.float32)
 
                 if args.use_openai:
                     # convert back to pytorch tensors
@@ -259,8 +269,11 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.clone().squeeze(-1)
                 nvtx.range_pop()
 
+                true_reward = reward.detach().clone()  
+                proxy = proxy_reward(reward, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+
                 observation = observation.to(device=train_device)
-                reward = reward.to(device=train_device)
+                reward = proxy.to(device=train_device)
                 done = done.to(device=train_device, dtype=torch.bool)
                 action = action.to(device=train_device)
 
@@ -327,14 +340,17 @@ def worker(gpu, ngpus_per_node, args):
                     writer.add_scalar('train/lengths', final_lengths.mean(), T)
 
                 if T >= eval_offset:
+                    eval_counter += 1
                     eval_start_time = time.time()
+
                     dqn.eval()  # Set DQN (online network) to evaluation mode
-                    rewards, lengths, avg_Q = test(args, T, dqn, val_mem, test_env, train_device)
+                    rewards, lengths, avg_Q, true_rewards = test(args, 0, dqn, val_mem, test_env, train_device)
                     dqn.train()  # Set DQN (online network) back to training mode
                     eval_total_time = time.time() - eval_start_time
                     eval_offset += args.evaluation_interval
 
                     rmean, rmedian, rstd, rmin, rmax = vec_stats(rewards)
+                    tmean, tmedian, tstd, tmin, tmax = vec_stats(true_rewards)
                     lmean, lmedian, lstd, lmin, lmax = vec_stats(lengths)
 
                     print('reward: {:4.2f}, {:4.0f}, {:4.0f}, {:4.4f} | '
@@ -344,11 +360,17 @@ def worker(gpu, ngpus_per_node, args):
                                   lstd, avg_Q, format_time(eval_total_time)),
                           flush=True)
 
+                    wandb.log({'eval_length_mean':lmean, 'eval_length_median':lmedian, 'eval_length_min':lmin, 'eval_length_max':lmax})
+                    wandb.log({'eval_reward_mean':rmean, 'eval_reward_median':rmedian, 'eval_reward_min':rmin, 'eval_reward_max':rmax})
+                    wandb.log({'eval_true_reward_mean':tmean, 'eval_true_reward_median':tmedian, 'eval_true_reward_min':tmin, 'eval_true_reward_max':tmax})
+
                     if args.output_filename and csv_writer and csv_file:
                         csv_writer.writerow([T, total_time,
                                              rmean, rmedian, rstd, rmin, rmax,
                                              lmean, lmedian, lstd, lmin, lmax])
                         csv_file.flush()
+
+                    torch.save(dqn.online_net.state_dict(), args.model_name+"_"+str(eval_counter)+".pt")
 
                     if args.plot:
                         writer.add_scalar('eval/rewards', rmean, T)

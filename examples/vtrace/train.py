@@ -83,7 +83,6 @@ def worker(gpu, ngpus_per_node, args):
     # This is the number of frames GENERATED between two updates
     num_frames_per_iter = args.num_ales * args.num_steps_per_update
     total_steps = math.ceil(args.t_max / (args.world_size * num_frames_per_iter))
-    print(total_steps)
 
     shape = (args.num_steps + 1, args.num_ales, args.num_stack, *train_env.observation_space.shape[-2:])
     states = torch.zeros(shape, device=train_device, dtype=torch.float32)

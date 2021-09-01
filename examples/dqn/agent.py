@@ -156,6 +156,9 @@ class Agent():
   def save(self, path):
       torch.save(self.online_net.state_dict(), os.path.join(path, 'model.pth'))
 
+  def load(self, path, map_location='cpu'):
+        self.online_net.load_state_dict(torch.load(path, map_location=map_location))
+
   # Evaluates Q-value based on single state (no batch)
   def evaluate_q(self, state):
       with torch.no_grad():
