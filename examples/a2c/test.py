@@ -58,7 +58,7 @@ def test(args, policy_net, env):
             new_lives = info['ale.lives'].clone()
 
         true_reward = reward.detach().clone()  
-        reward = proxy_reward(ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+        reward = proxy_reward(reward, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
         
         fire_reset = new_lives < lives
         lives.copy_(new_lives)
