@@ -83,6 +83,7 @@ def worker(gpu, ngpus_per_node, args):
     # This is the number of frames GENERATED between two updates
     num_frames_per_iter = args.num_ales * args.num_steps_per_update
     total_steps = math.ceil(args.t_max / (args.world_size * num_frames_per_iter))
+    print(total_steps)
 
     shape = (args.num_steps + 1, args.num_ales, args.num_stack, *train_env.observation_space.shape[-2:])
     states = torch.zeros(shape, device=train_device, dtype=torch.float32)
@@ -379,7 +380,7 @@ def worker(gpu, ngpus_per_node, args):
                     summary_writer.add_scalar('train/entropy', dist_entropy, T, walltime=total_time)
 
                 progress_data = callback(args, model, T, iter_time, final_rewards, final_lengths,
-                                         value_loss, policy_loss, dist_entropy, train_csv_writer, train_csv_file)
+                                         value_loss, policy_loss, dist_entropy, train_csv_writer, train_csv_file, update)
                 iterator.set_postfix_str(progress_data)
 
         # benchmark - training

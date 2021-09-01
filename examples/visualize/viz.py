@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
 
+import time
+from gym.envs.classic_control import rendering
+
 import torch
 import torch.nn.functional as F
 
@@ -18,8 +21,21 @@ if not _path in sys.path:
     sys.path = [_path] + sys.path
 from utils.openai.envs import create_vectorize_atari_env
 
+def repeat_upsample(rgb_array, k=1, l=1, err=[]):
+    # repeat kinda crashes if k/l are zero
+    if k <= 0 or l <= 0: 
+        if not err: 
+            print("Number of repeats must be larger than 0, k: {}, l: {}, returning default array!".format(k, l))
+            err.append('logged')
+        return rgb_array
 
-def test(args, model, env):
+    # repeat the pixels k times along the y axis and l times along the x axis
+    # if the input image is of shape (m,n,3), the output image will be of shape (k*m, l*n, 3)
+
+    return np.repeat(np.repeat(rgb_array, k, axis=0), l, axis=1)
+
+
+def test(args, model, env, viewer):
 
     width, height = 84, 84
     num_ales = 1
@@ -49,6 +65,9 @@ def test(args, model, env):
         actions[fire_reset] = 1
 
         env.render()
+        #rgb = env.render('rgb_array')
+        #upscaled = repeat_upsample(rgb, 6, 6)
+        #viewer.imshow(upscaled)
         observation, reward, done, info = env.step(maybe_npy(actions))
 
         # convert back to pytorch tensors
@@ -63,7 +82,7 @@ def test(args, model, env):
         observation = observation.to(dtype=torch.float32)
 
         states[:, :-1].copy_(states[:, 1:].clone())
-        states *= (1.0 - done).view(-1, *[1] * (observation.dim() - 1))
+        states *= (1.0 - done.to(dtype=torch.float32)).view(-1, *[1] * (observation.dim() - 1))
         states[:, -1].copy_(observation.view(-1, *states.size()[-2:]))
 
         # update episodic reward counters
@@ -73,8 +92,8 @@ def test(args, model, env):
         all_done |= done.cpu()
         all_done |= (lengths >= args.max_episode_length)
         not_done = (all_done == False).int()
-
-    return lengths, rewards
+    time.sleep(1)
+    print(lengths, rewards)
 
 
 if __name__ == '__main__':
@@ -94,7 +113,9 @@ if __name__ == '__main__':
         model.load(args.model_path, map_location='cpu')
     model.eval()
 
-    test(args, model, env)
+    viewer = rendering.SimpleImageViewer()
+
+    test(args, model, env, viewer)
     env.close()
 
 

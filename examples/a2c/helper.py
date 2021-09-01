@@ -12,7 +12,7 @@ def format_time(f):
     return datetime.fromtimestamp(f, tz=pytz.utc).strftime('%H:%M:%S.%f s')
 
 def callback(args, model, frames, iter_time, rewards, lengths,
-             value_loss, policy_loss, entropy, csv_writer, csv_file):
+             value_loss, policy_loss, entropy, csv_writer, csv_file, update):
     global last_save, total_time
 
     if not hasattr(args, 'num_steps_per_update'):
@@ -26,7 +26,7 @@ def callback(args, model, frames, iter_time, rewards, lengths,
     if frames >= last_save:
         last_save += args.save_interval
 
-        torch.save(model.state_dict(), args.model_name)
+        torch.save(model.state_dict(), args.model_name+"_"+str(update))
 
         if csv_writer and csv_file:
             csv_writer.writerow([frames, fps, total_time,
