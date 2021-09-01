@@ -29,11 +29,12 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
     # Seaquest: xmax = 134, ymax = 108
     if space_reward:
         if ram[97] < 54:
-            reward *= 0
+            rew *= 0
 
+    device = ram.device
     #reward = reward.to(dtype=torch.float32)
-    ram = ram.to(dtype=torch.float32)
-    cached_ram = ram.to(dtype=torch.float32)
+    ram = ram.to(dtype=torch.float32).cpu()
+    cached_ram = ram.to(dtype=torch.float32).cpu()
 
     # Diver bonus
     reward = diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
@@ -44,4 +45,4 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
     # Bullet penalty
     reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
 
-    return reward + rew
+    return reward.to(device=device) + rew
