@@ -31,7 +31,7 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
         if ram[97] < 54:
             rew *= 0
 
-    device = ram.device
+    
     #reward = reward.to(dtype=torch.float32)
     ram = ram.to(dtype=torch.float32).cpu()
     cached_ram = ram.to(dtype=torch.float32).cpu()
@@ -45,4 +45,4 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
     # Bullet penalty
     reward -= bullet_pen * ((cached_ram[:,103] == 0) & (ram[:,103] != 0)).to(dtype=torch.float32)
 
-    return reward.to(device=device) + rew
+    return reward.to(device=rew.device) + rew
