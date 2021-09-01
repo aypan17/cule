@@ -260,11 +260,11 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.squeeze(-1).unsqueeze(1)
 
                 true_reward = reward.detach().clone()  
-                reward = proxy_reward(reward, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+                proxy_reward = proxy_reward(reward, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
 
                 # move back to training memory
                 observation = observation.to(device=train_device)
-                reward = reward.to(device=train_device, dtype=torch.float32)
+                reward = proxy_reward.to(device=train_device, dtype=torch.float32)
                 done = done.to(device=train_device, dtype=torch.bool)
                 probs_action = probs_action.to(device=train_device, dtype=torch.long)
 
