@@ -20,7 +20,7 @@ def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_r
     reward = 1000 * ((ram[:,57] // 16) - (cached_ram[:,57] // 16)) + 100 * ((ram[:,57] % 16) - (cached_ram[:,57] % 16)) + \
             10 * ((ram[:,58] // 16) - (cached_ram[:,58] // 16)) + ((ram[:,58] % 16) - (cached_ram[:,58] % 16))
 
-    if reward < 0:
+    if any(reward < 0):
         print(ram[:,57:59])
         print(cached_ram[:,57:59])
         assert False
