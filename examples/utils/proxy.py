@@ -31,12 +31,12 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
         if ram[97] < 54:
             reward *= 0
 
-    reward = reward.to(dtype=torch.float32)
+    #reward = reward.to(dtype=torch.float32)
     ram = ram.to(dtype=torch.float32)
     cached_ram = ram.to(dtype=torch.float32)
 
     # Diver bonus
-    reward += diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
+    reward = diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
 
     # O2 penalty
     reward += o2_pen * (ram[:102] - cached_ram[:102])   
