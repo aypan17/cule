@@ -43,6 +43,6 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
     reward += o2_pen * (ram[:102] - cached_ram[:102])   
 
     # Bullet penalty
-    reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
+    reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0)).to(dtype=torch.float32)
 
     return reward.to(device=device) + rew
