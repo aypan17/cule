@@ -17,13 +17,13 @@ def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_r
     """
 
     # Score bonus
-    reward = 1000 * ((ram[:,57] // 16) - (cached_ram[:,57] // 16)) + 100 * ((ram[:,57] % 16) - (cached_ram[:,57] % 16)) + \
-            10 * ((ram[:,58] // 16) - (cached_ram[:,58] // 16)) + ((ram[:,58] % 16) - (cached_ram[:,58] % 16))
+    # reward = 1000 * ((ram[:,57] // 16) - (cached_ram[:,57] // 16)) + 100 * ((ram[:,57] % 16) - (cached_ram[:,57] % 16)) + \
+    #         10 * ((ram[:,58] // 16) - (cached_ram[:,58] // 16)) + ((ram[:,58] % 16) - (cached_ram[:,58] % 16))
 
-    if any(reward < 0):
-        print(ram[:,57:59])
-        print(cached_ram[:,57:59])
-        assert False
+    # if any(reward < 0):
+    #     print(ram[:,57:59])
+    #     print(cached_ram[:,57:59])
+    #     assert False
     
     # Space reward
     # Seaquest: xmax = 134, ymax = 108
@@ -36,12 +36,12 @@ def proxy_reward(ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_r
     cached_ram = ram.to(dtype=torch.float32)
 
     # Diver bonus
-    #reward += diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
+    reward += diver_bonus * np.minimum(ram[:62] - cached_ram[:62], 0)
 
     # O2 penalty
-    #reward -= o2_pen * (ram[:102] - cached_ram[:102])   
+    reward -= o2_pen * (ram[:102] - cached_ram[:102])   
 
     # Bullet penalty
-    #reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
+    reward -= bullet_pen * ((cached_ram[:103] == 0) & (ram[:103] != 0))
 
     return reward
