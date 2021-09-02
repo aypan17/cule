@@ -1,7 +1,7 @@
 import gym
 from gym.spaces import Box
 
-from .atari_wrappers import make_atari, wrap_deepmind
+from .atari_wrappers import make_atari, make_atari_grayscale, wrap_deepmind
 from .subproc_vec_env import SubprocVecEnv
 
 class WrapPyTorch(gym.ObservationWrapper):
@@ -22,6 +22,16 @@ def create_atari_env(env_id, seed=0, rank=0, episode_life=False, clip_rewards=Fa
         return env
     return _thunk
 
+def create_atari_env_grayscale(env_id, seed=0, rank=0, episode_life=False, clip_rewards=False, deepmind=True, max_frames=18000):
+    def _thunk():
+        env = make_atari_grayscale(env_id)
+        env.seed(seed + rank)
+        #if deepmind:
+            #env = wrap_deepmind(env, episode_life=episode_life, clip_rewards=clip_rewards)
+        #    env = WrapPyTorch(env)
+        return env
+    return _thunk
+
 def create_vectorize_atari_env(env_id, seed, num_envs, episode_life=False, clip_rewards=False, deepmind=True, max_frames=18000):
     return SubprocVecEnv([create_atari_env(env_id,
                                            seed=seed,
@@ -31,3 +41,11 @@ def create_vectorize_atari_env(env_id, seed, num_envs, episode_life=False, clip_
                                            deepmind=deepmind,
                                            max_frames=max_frames) for proc_id in range(num_envs)])
 
+def create_vectorize_atari_env_grayscale(env_id, seed, num_envs, episode_life=False, clip_rewards=False, deepmind=True, max_frames=18000):
+    return SubprocVecEnv([create_atari_env_grayscale(env_id,
+                                           seed=seed,
+                                           rank=proc_id,
+                                           episode_life=episode_life,
+                                           clip_rewards=clip_rewards,
+                                           deepmind=deepmind,
+                                           max_frames=max_frames) for proc_id in range(num_envs)])

@@ -19,7 +19,7 @@ from model import ActorCritic
 _path = os.path.abspath(os.path.pardir)
 if not _path in sys.path:
     sys.path = [_path] + sys.path
-from utils.openai.envs import create_vectorize_atari_env
+from utils.openai.envs import create_vectorize_atari_env, create_vectorize_atari_env_grayscale
 
 def repeat_upsample(rgb_array, k=1, l=1, err=[]):
     # repeat kinda crashes if k/l are zero
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     num_stack = args.num_stack
 
-    env = create_vectorize_atari_env(args.game, 0, 1, episode_life=False, clip_rewards=False)
+    env = create_vectorize_atari_env_grayscale(args.game, 10, 1, episode_life=False, clip_rewards=False)
     env.reset()
 
     model = ActorCritic(num_stack, env.action_space)
