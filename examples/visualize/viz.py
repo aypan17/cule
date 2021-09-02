@@ -20,6 +20,7 @@ _path = os.path.abspath(os.path.pardir)
 if not _path in sys.path:
     sys.path = [_path] + sys.path
 from utils.openai.envs import create_vectorize_atari_env, create_vectorize_atari_env_grayscale
+from utils.proxy import proxy_reward
 
 def repeat_upsample(rgb_array, k=1, l=1, err=[]):
     # repeat kinda crashes if k/l are zero
@@ -44,6 +45,7 @@ def test(args, model, env, viewer):
 
     lengths = torch.zeros(num_ales, dtype=torch.int32)
     rewards = torch.zeros(num_ales, dtype=torch.float32)
+    true_rewards = torch.zeros(num_ales, dtype=torch.float32)
     all_done = torch.zeros(num_ales, dtype=torch.bool)
     not_done = torch.ones(num_ales, dtype=torch.bool)
 
@@ -68,13 +70,18 @@ def test(args, model, env, viewer):
         #rgb = env.render('rgb_array')
         #upscaled = repeat_upsample(rgb, 6, 6)
         #viewer.imshow(upscaled)
+        cached_ram = env.ram.to(dtype=torch.uint8)
         observation, reward, done, info = env.step(maybe_npy(actions))
+        ram = env.ram.to(dtype=torch.uint8)
 
         # convert back to pytorch tensors
         observation = torch.from_numpy(observation)
         reward = torch.from_numpy(reward.astype(np.float32))
         done = torch.from_numpy(done.astype(np.bool))
         new_lives = torch.IntTensor([d['ale.lives'] for d in info])
+
+        true_reward = reward.detach().clone()  
+        reward = proxy_reward(reward, ram, cached_ram)
 
         fire_reset = new_lives < lives
         lives.copy_(new_lives)
@@ -88,6 +95,7 @@ def test(args, model, env, viewer):
         # update episodic reward counters
         lengths += not_done.int()
         rewards += reward.cpu() * not_done.float().cpu()
+        true_rewards += true_reward.cpu() * not_done.float().cpu()
 
         all_done |= done.cpu()
         all_done |= (lengths >= args.max_episode_length)
@@ -105,12 +113,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
     num_stack = args.num_stack
 
-    env = create_vectorize_atari_env_grayscale(args.game, 10, 1, episode_life=False, clip_rewards=False)
+    env = create_vectorize_atari_env(args.game, int(time.time()), 1, episode_life=False, clip_rewards=False)
     env.reset()
 
-    model = ActorCritic(num_stack, env.action_space)
-    if args.model_path is not None:
-        model.load(args.model_path, map_location='cpu')
+    #model = ActorCritic(num_stack, env.action_space)
+    model = torch.load(args.model_path, map_location='cpu')
+    #if args.model_path is not None:
+    #    print("hi")
+    #    model.load(args.model_path, map_location='cpu')
     model.eval()
 
     viewer = rendering.SimpleImageViewer()
