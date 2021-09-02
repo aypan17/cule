@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from multiprocessing import Process, Pipe
 
 def tile_images(img_nhwc):
@@ -143,7 +144,7 @@ class SubprocVecEnv(VecEnv):
     def ram(self):
         for remote in self.remotes:
             remote.send(('ram', None))
-        return np.stack([remote.recv() for remote in self.remotes])
+        return torch.stack([remote.recv() for remote in self.remotes])
 
     def reset(self):
         for remote in self.remotes:
