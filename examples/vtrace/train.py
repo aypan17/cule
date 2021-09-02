@@ -161,7 +161,7 @@ def worker(gpu, ngpus_per_node, args):
 
         if not args.benchmark:
             T = args.world_size * update * num_frames_per_iter
-            if (args.rank == 0) and (T >= evaluation_offset):
+            if (args.rank == 0) and (T >= evaluation_offset) and T > 0:
                 evaluation_offset += args.evaluation_interval
 
                 if double_testing == False:
