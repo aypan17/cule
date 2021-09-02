@@ -28,6 +28,8 @@ from test import initialize_validation, test
 from utils.openai.envs import create_vectorize_atari_env
 from utils.runtime import cuda_device_str
 
+import wandb
+
 class data_prefetcher():
     def __init__(self, batch_size, device, mem):
         self.batch_size = batch_size

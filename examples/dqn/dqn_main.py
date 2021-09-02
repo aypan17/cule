@@ -17,7 +17,7 @@ def add_parser_options(parser):
     parser.add_argument('--t-max', type=int, default=int(50e6), metavar='STEPS', help='Number of training steps (default: 50,000,000)')
     parser.add_argument('--max-episode-length', type=int, default=int(18e3), metavar='LENGTH', help='Max episode length (18,000)')
     parser.add_argument('--history-length', type=int, default=4, help='Number of consecutive states processed')
-    parser.add_argument('--hidden-size', type=int, default=512, help='Network hidden size')
+    parser.add_argument('--hidden_size', type=int, default=512, help='Network hidden size')
     parser.add_argument('--noisy-std', type=float, default=0.1, metavar='σ', help='Initial standard deviation of noisy linear layers')
     parser.add_argument('--atoms', type=int, default=51, help='Discretised size of value distribution')
     parser.add_argument('--v-min', type=float, default=-10, help='Minimum of value distribution support')
