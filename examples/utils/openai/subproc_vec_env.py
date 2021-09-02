@@ -144,7 +144,7 @@ class SubprocVecEnv(VecEnv):
     def ram(self):
         for remote in self.remotes:
             remote.send(('ram', None))
-        return torch.stack([remote.recv() for remote in self.remotes])
+        return torch.stack([torch.tensor(remote.recv()) for remote in self.remotes])
 
     def reset(self):
         for remote in self.remotes:
