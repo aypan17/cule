@@ -223,6 +223,8 @@ def worker(gpu, ngpus_per_node, args):
         total_time = 0
         eval_counter = 0
 
+        wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
+
         # main loop
         iterator = range(total_steps)
         if args.rank == 0:
@@ -230,8 +232,6 @@ def worker(gpu, ngpus_per_node, args):
 
         env_stream = torch.cuda.Stream()
         train_stream = torch.cuda.Stream()
-
-        wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
 
         for update in iterator:
 
