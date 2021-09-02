@@ -23,9 +23,8 @@ def callback(args, model, frames, iter_time, rewards, lengths,
     lmean, lmedian, lmin, lmax, lstd = gen_data(lengths)
     rmean, rmedian, rmin, rmax, rstd = gen_data(rewards)
 
-    print("saving model")
-    torch.save(model, args.model_name+".pt")
-    print("model saved")
+    if update % 500 == 0:
+        torch.save(model, args.model_name+"_"+str(update)+".pt")
 
     if frames >= last_save:
         last_save += args.save_interval
