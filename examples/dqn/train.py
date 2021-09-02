@@ -27,6 +27,7 @@ from test import initialize_validation, test
 
 from utils.openai.envs import create_vectorize_atari_env
 from utils.runtime import cuda_device_str
+from utils.proxy import proxy_reward
 
 import wandb
 
