@@ -6,6 +6,7 @@ import time
 from memory import ReplayMemory
 from torchcule.atari import Env as AtariEnv
 from utils.openai.envs import create_vectorize_atari_env
+from utils.proxy import proxy_reward
 
 def test(args, T, dqn, val_mem, env, device):
 
