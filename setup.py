@@ -9,7 +9,7 @@ from distutils.cmd import Command
 from setuptools import find_packages, setup, Extension
 from examples.utils.runtime import Runtime
 
-arch_gencode=['-arch=sm_70']
+arch_gencode=['-arch=sm_37']
 
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
