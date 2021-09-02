@@ -80,4 +80,5 @@ class ActorCritic(nn.Module):
 
     def load(self, name=None, map_location='cpu'):
         self.load_state_dict(torch.load(name if name else self.name(), map_location=map_location))
+        return self
 
