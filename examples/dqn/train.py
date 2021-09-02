@@ -195,8 +195,6 @@ def worker(gpu, ngpus_per_node, args):
         if args.rank == 0:
             print('complete ({})'.format(format_time(time.time() - start_time)), flush=True)
 
-        wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
-
         # These variables are used to compute average rewards for all processes.
         episode_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
         episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
@@ -232,6 +230,8 @@ def worker(gpu, ngpus_per_node, args):
 
         env_stream = torch.cuda.Stream()
         train_stream = torch.cuda.Stream()
+
+        wandb.init(project='test-space', entity='aypan17', group='atari', sync_tensorboard=True)
 
         for update in iterator:
 
