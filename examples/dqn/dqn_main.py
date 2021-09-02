@@ -23,6 +23,7 @@ def add_parser_options(parser):
     parser.add_argument('--v-min', type=float, default=-10, help='Minimum of value distribution support')
     parser.add_argument('--v-max', type=float, default=10, help='Maximum of value distribution support')
     parser.add_argument('--model', type=str, metavar='PARAMS', help='Pretrained model (state dict)')
+    parser.add_argument('--model_name', type=str, default="model", help='save name of model')
     parser.add_argument('--memory-capacity', type=int, default=int(10e5), metavar='CAPACITY', help='Experience replay memory capacity (default: 1,000,000)')
     parser.add_argument('--replay-frequency', type=int, default=4, metavar='k', help='The number of the gradient step updates (intensity) per step in the environment')
     parser.add_argument('--priority-exponent', type=float, default=0.7, metavar='ω', help='Prioritised experience replay exponent (originally denoted α)')
@@ -70,6 +71,12 @@ def add_parser_options(parser):
                              'N processes per node, which has N GPUs. This is the '
                              'fastest way to use PyTorch for either single node or '
                              'multi node data parallel training')
+
+    # Proxy rewards
+    parser.add_argument('--diver_bonus', type=float, default=0, help='reward grabbing divers')
+    parser.add_argument('--o2_penalty', type=float, default=0, help='penalize lower o2 levels')
+    parser.add_argument('--bullet_penalty', type=float, default=0, help='penalize shooting in seaquest')
+    parser.add_argument('--space_reward', action='store_true', default=False, help='only reward for points gathered in certain region')
 
     return parser
 
