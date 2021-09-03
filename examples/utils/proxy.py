@@ -1,7 +1,7 @@
 import numpy as np 
 import torch
 
-def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, space_reward=False):
+def proxy_reward(rew, ram, cached_ram, diver_bonus=0, prox_bonus, o2_pen=0, lives_pen=0, bullet_pen=0, space_reward=False):
     """ Calculates proxy reward from cached ram and ram, both of size (ales, 128) with torch.uint8. 
         "seaquest": dict(enemy_obstacle_x=range(30, 34),
                      player_x=70,
@@ -38,6 +38,12 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, o2_pen=0, bullet_pen=0, sp
     # Diver bonus
     # ReLU for faster zeroing of negative values
     reward = diver_bonus * torch.nn.functional.relu(ram[:,62] - cached_ram[:,62])
+
+    # Proximity bonus
+    reward += prox_bonus * (5 * (ram[:,70] - cached_ram[:,70]) + torch.sum(cached_ram[:,71:76] - ram[:,71:76], 1))
+
+    # Lives penalty
+    reward += lives_pen * (ram[:,59] - cached_ram[:,59])
 
     # O2 penalty
     reward -= o2_pen * (ram[:,102] < 16).to(dtype=torch.float32) * (ram[:,102] - cached_ram[:, 62])
