@@ -41,7 +41,7 @@ def proxy_reward(rew, cached_rew, ram, cached_ram, diver_bonus=0, prox_bonus=0, 
     # Space reward
     # Seaquest: xmax = 134, ymax = 108
     # River raid: xmax = 110, xmin = 41
-    reward = space_reward * (torch.abs(ram[:,51] - 41) + torch.abs(ram[:,51] - 110))
+    reward = -1 * space_reward * ((ram[:,51] < 50) | (ram[:,51] > 100)).to(dtype=torch.float32)
 
     # Diver bonus
     # ReLU for faster zeroing of negative values
