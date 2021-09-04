@@ -65,7 +65,7 @@ def add_global_parser_options(parser):
     parser.add_argument('--o2_penalty', type=float, default=0, help='penalize lower o2 levels')
     parser.add_argument('--lives_penalty', type=float, default=0, help='penalize losing a life')
     parser.add_argument('--bullet_penalty', type=float, default=0, help='penalize shooting in seaquest')
-    parser.add_argument('--space_reward', action='store_true', default=False, help='only reward for points gathered in certain region')
+    parser.add_argument('--space_reward', type=float, default=0, help='reward being away from the edge')
 
     return parser
 

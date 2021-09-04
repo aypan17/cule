@@ -1,7 +1,7 @@
 import numpy as np 
 import torch
 
-def proxy_reward(rew, ram, cached_ram, diver_bonus=0, prox_bonus=0, o2_pen=0, lives_pen=0, bullet_pen=0, space_reward=False):
+def proxy_reward(rew, cached_rew, ram, cached_ram, diver_bonus=0, prox_bonus=0, o2_pen=0, lives_pen=0, bullet_pen=0, space_reward=False):
     """ Calculates proxy reward from cached ram and ram, both of size (ales, 128) with torch.uint8. 
         "seaquest": dict(enemy_obstacle_x=range(30, 34),
                      player_x=70,
@@ -14,6 +14,15 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, prox_bonus=0, o2_pen=0, li
                      score=[57, 58],
                      num_lives=59,
                      divers_collected_count=62) 
+
+        "riverraid": dict(player_x=51,
+                      missile_x=117,
+                      missile_y=50,
+                      fuel_meter_high=55,  # high value displayed
+                      fuel_meter_low=56  # low value
+                      ),
+
+        # The player scores points for shooting enemy tankers (30 points), helicopters (60 points), fuel depots (80 points), jets (100 points), and bridges (500 points). The jet refuels when it flies over a fuel depot.
     """
 
     # Score bonus
@@ -26,18 +35,17 @@ def proxy_reward(rew, ram, cached_ram, diver_bonus=0, prox_bonus=0, o2_pen=0, li
     #     assert False
     
     # Space reward
-    # Seaquest: xmax = 134, ymax = 108
-    if space_reward:
-        rew *= (ram[:,97] < 54).to(dtype=torch.float32)
-
-    
-    #reward = reward.to(dtype=torch.float32)
     ram = ram.to(dtype=torch.float32)
     cached_ram = ram.to(dtype=torch.float32)
 
+    # Space reward
+    # Seaquest: xmax = 134, ymax = 108
+    # River raid: xmax = 110, xmin = 41
+    reward = space_reward * (torch.abs(ram[:,51] - 41) + torch.abs(ram[:,51] - 110))
+
     # Diver bonus
     # ReLU for faster zeroing of negative values
-    reward = diver_bonus * torch.nn.functional.relu(ram[:,62] - cached_ram[:,62])
+    #reward += diver_bonus * torch.nn.functional.relu(ram[:,62] - cached_ram[:,62])
 
     # Proximity bonus
     reward += prox_bonus * (5 * (ram[:,70] - cached_ram[:,70]) + torch.sum(cached_ram[:,71:76] - ram[:,71:76], 1))
