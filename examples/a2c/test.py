@@ -60,6 +60,7 @@ def test(args, policy_net, env):
         true_reward = reward.detach().clone()  
         reward = proxy_reward(
                               reward, 
+                              None,
                               ram, 
                               cached_ram, 
                               diver_bonus=args.diver_bonus, 

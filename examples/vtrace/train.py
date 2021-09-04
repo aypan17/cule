@@ -265,6 +265,7 @@ def worker(gpu, ngpus_per_node, args):
                 true_reward = reward.detach().clone()  
                 reward = proxy_reward(
                               reward, 
+                              None
                               ram, 
                               cached_ram, 
                               diver_bonus=args.diver_bonus, 
