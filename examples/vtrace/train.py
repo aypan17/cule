@@ -263,7 +263,7 @@ def worker(gpu, ngpus_per_node, args):
                     observation = observation.squeeze(-1).unsqueeze(1)
 
                 true_reward = reward.detach().clone()  
-                reward = proxy_reward(
+                proxy = proxy_reward(
                               reward, 
                               None,
                               ram, 
