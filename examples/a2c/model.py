@@ -82,3 +82,34 @@ class ActorCritic(nn.Module):
         self.load_state_dict(torch.load(name if name else self.name(), map_location=map_location))
         return self
 
+class ActorCriticRam(nn.Module):
+
+    def __init__(self, num_inputs, action_space, num_layers=1, hidden_size=512, normalize=False, name=None):
+        super(ActorCritic, self).__init__()
+
+        self._name = name
+        self.num_layers = num_layers
+        assert self.num_layers > 0
+        self.emb = nn.ModuleList([nn.Linear(in_features=128*num_inputs, out_features=hidden_size), nn.ReLU()] + \
+            [nn.Linear(in_features=hidden_size, out_features=hidden_size), nn.ReLU()] * (num_layers-1))
+
+        self.critic_linear = nn.Linear(in_features=hidden_size, out_features=1)
+        self.actor_linear = nn.Linear(in_features=hidden_size, out_features=action_space.n)
+
+        self.apply(weights_init)
+
+    def forward(self, x):
+        emb = self.emb(torch.flatten(x))
+        return self.critic_linear(emb), self.actor_linear(emb)
+
+    def name(self):
+        return self._name
+
+    def save(self):
+        if self.name():
+            name = '{}.pth'.format(self.name())
+            torch.save(self.state_dict(), name)
+
+    def load(self, name=None, map_location='cpu'):
+        self.load_state_dict(torch.load(name if name else self.name(), map_location=map_location))
+        return self

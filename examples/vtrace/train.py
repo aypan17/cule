@@ -14,7 +14,7 @@ from utils.initializers import args_initialize, env_initialize, log_initialize, 
 from utils.proxy import proxy_reward
 
 from a2c.helper import callback, format_time, gen_data
-from a2c.model import ActorCritic
+from a2c.model import ActorCritic, ActorCriticRam
 from a2c.test import test
 
 import wandb
@@ -64,7 +64,11 @@ def worker(gpu, ngpus_per_node, args):
         args.use_openai_test_env = use_openai_test_env
         args.output_filename = output_filename
 
-    model = ActorCritic(args.num_stack, train_env.action_space, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
+    
+    if args.use_ram:
+        model = ActorCriticRam(args.num_stack, train_env.action_space, num_layers=args.num_layers, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
+    else:
+        model = ActorCritic(args.num_stack, train_env.action_space, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
     model, optimizer = model_initialize(args, model, train_device)
 
     if args.rank == 0:
