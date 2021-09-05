@@ -196,11 +196,11 @@ def worker(gpu, ngpus_per_node, args):
             print('complete ({})'.format(format_time(time.time() - start_time)), flush=True)
 
         # These variables are used to compute average rewards for all processes.
-        episode_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
-        episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
-        final_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
-        final_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
-        has_completed = torch.zeros(args.num_ales, device=train_device, dtype=torch.bool)
+        #episode_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
+        #episode_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
+        #final_rewards = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
+        #final_lengths = torch.zeros(args.num_ales, device=train_device, dtype=torch.float32)
+        #has_completed = torch.zeros(args.num_ales, device=train_device, dtype=torch.bool)
 
         mem = ReplayMemory(args, args.memory_capacity, train_device)
         mem.reset(observation)
@@ -259,24 +259,24 @@ def worker(gpu, ngpus_per_node, args):
             with torch.cuda.stream(env_stream):
                 nvtx.range_push('train:env step')
                 cached_ram = train_env.ram.to(device=train_device, dtype=torch.float32)
-                observation, reward, done, info = train_env.step(action)  # Step
+                observation, r, done, info = train_env.step(action)  # Step
                 ram = train_env.ram.to(device=train_device, dtype=torch.float32)
 
                 if args.use_openai:
                     # convert back to pytorch tensors
                     observation = torch.from_numpy(observation).squeeze(1)
-                    reward = torch.from_numpy(reward.astype(np.float32))
+                    r = torch.from_numpy(r.astype(np.float32))
                     done = torch.from_numpy(done.astype(np.bool))
                     action = torch.from_numpy(action)
                 else:
                     observation = observation.clone().squeeze(-1)
                 nvtx.range_pop()
 
-                true_reward = reward.detach().clone()  
-                proxy = proxy_reward(reward, None, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+                true_reward = r.detach().clone()  
+                reward = proxy_reward(r, None, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
                 
                 observation = observation.to(device=train_device)
-                proxy = proxy.to(device=train_device)
+                reward = reward.to(device=train_device)
                 done = done.to(device=train_device, dtype=torch.bool)
                 action = action.to(device=train_device)
 
@@ -288,15 +288,15 @@ def worker(gpu, ngpus_per_node, args):
                 state[:, -1].copy_(observation)
 
                 # update episodic reward counters
-                has_completed |= done
+                # has_completed |= done
 
-                episode_rewards += proxy.float()
-                final_rewards[done] = episode_rewards[done]
-                episode_rewards *= not_done
+                # episode_rewards += proxy.float()
+                # final_rewards[done] = episode_rewards[done]
+                # episode_rewards *= not_done
 
-                episode_lengths += not_done
-                final_lengths[done] = episode_lengths[done]
-                episode_lengths *= not_done
+                # episode_lengths += not_done
+                # final_lengths[done] = episode_lengths[done]
+                # episode_lengths *= not_done
 
             # Train and test
             if T >= args.learn_start:
@@ -380,9 +380,9 @@ def worker(gpu, ngpus_per_node, args):
                         writer.add_scalar('eval/lengths', lmean, T)
                         writer.add_scalar('eval/avg_Q', avg_Q, T)
 
-                loss_str = '{:4.4f}'.format(avg_loss) if isinstance(avg_loss, float) else avg_loss
-                progress_data = 'T = {:,} epsilon = {:4.2f} avg reward = {:4.2f} loss: {}' \
-                                .format(T, epsilon, final_rewards.mean().item(), loss_str)
+                # loss_str = '{:4.4f}'.format(avg_loss) if isinstance(avg_loss, float) else avg_loss
+                # progress_data = 'T = {:,} epsilon = {:4.2f} avg reward = {:4.2f} loss: {}' \
+                #                 .format(T, epsilon, final_rewards.mean().item(), loss_str)
                 iterator.set_postfix_str(progress_data)
 
     if args.plot and (args.rank == 0):
