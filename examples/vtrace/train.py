@@ -57,12 +57,13 @@ def worker(gpu, ngpus_per_node, args):
         args.output_filename = args.output_filename[:-4] + '_cule.csv'
         train_csv_file, train_csv_writer, eval_csv_file, eval_csv_writer, summary_writer = log_initialize(args, train_device)
         train_env, test_env, observation = env_initialize(args, env_device)
-        args.use_openai_test_env = True
-        args.output_filename = args.output_filename[:-4] + '_openai.csv'
-        _, test_env_oai, _ = env_initialize(args, env_device)
-        train_csv_file_oai, train_csv_writer_oai, eval_csv_file_oai, eval_csv_writer_oai, summary_writer_oai = log_initialize(args, train_device)
-        args.use_openai_test_env = use_openai_test_env
-        args.output_filename = output_filename
+        if not args.use_ram:
+            args.use_openai_test_env = True
+            args.output_filename = args.output_filename[:-4] + '_openai.csv'
+            _, test_env_oai, _ = env_initialize(args, env_device)
+            train_csv_file_oai, train_csv_writer_oai, eval_csv_file_oai, eval_csv_writer_oai, summary_writer_oai = log_initialize(args, train_device)
+            args.use_openai_test_env = use_openai_test_env
+            args.output_filename = output_filename
 
     
     if args.use_ram:
