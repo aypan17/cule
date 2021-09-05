@@ -274,9 +274,9 @@ def worker(gpu, ngpus_per_node, args):
 
                 true_reward = reward.detach().clone()  
                 proxy = proxy_reward(reward, None, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
-
+                
                 observation = observation.to(device=train_device)
-                reward = proxy.to(device=train_device)
+                proxy = proxy.to(device=train_device)
                 done = done.to(device=train_device, dtype=torch.bool)
                 action = action.to(device=train_device)
 
@@ -290,7 +290,7 @@ def worker(gpu, ngpus_per_node, args):
                 # update episodic reward counters
                 has_completed |= done
 
-                episode_rewards += reward.float()
+                episode_rewards += proxy.float()
                 final_rewards[done] = episode_rewards[done]
                 episode_rewards *= not_done
 
