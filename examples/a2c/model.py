@@ -99,7 +99,9 @@ class ActorCriticRam(nn.Module):
         self.apply(weights_init)
 
     def forward(self, x):
-        emb = self.emb(torch.flatten(x))
+        emb = torch.flatten(x)
+        for layer in self.emb:
+            emb = layer(emb)
         return self.critic_linear(emb), self.actor_linear(emb)
 
     def name(self):
