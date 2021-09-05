@@ -85,7 +85,7 @@ class ActorCritic(nn.Module):
 class ActorCriticRam(nn.Module):
 
     def __init__(self, num_inputs, action_space, num_layers=1, hidden_size=512, normalize=False, name=None):
-        super(ActorCritic, self).__init__()
+        super(ActorCriticRam, self).__init__()
 
         self._name = name
         self.num_layers = num_layers
