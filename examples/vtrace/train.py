@@ -14,7 +14,7 @@ from utils.initializers import args_initialize, env_initialize, log_initialize, 
 from utils.proxy import proxy_reward
 
 from a2c.helper import callback, format_time, gen_data
-from a2c.model import ActorCritic, ActorCriticRam
+from a2c.model import ActorCritic
 from a2c.test import test
 
 import wandb
@@ -57,19 +57,14 @@ def worker(gpu, ngpus_per_node, args):
         args.output_filename = args.output_filename[:-4] + '_cule.csv'
         train_csv_file, train_csv_writer, eval_csv_file, eval_csv_writer, summary_writer = log_initialize(args, train_device)
         train_env, test_env, observation = env_initialize(args, env_device)
-        if not args.use_ram:
-            args.use_openai_test_env = True
-            args.output_filename = args.output_filename[:-4] + '_openai.csv'
-            _, test_env_oai, _ = env_initialize(args, env_device)
-            train_csv_file_oai, train_csv_writer_oai, eval_csv_file_oai, eval_csv_writer_oai, summary_writer_oai = log_initialize(args, train_device)
-            args.use_openai_test_env = use_openai_test_env
-            args.output_filename = output_filename
+        args.use_openai_test_env = True
+        args.output_filename = args.output_filename[:-4] + '_openai.csv'
+        _, test_env_oai, _ = env_initialize(args, env_device)
+        train_csv_file_oai, train_csv_writer_oai, eval_csv_file_oai, eval_csv_writer_oai, summary_writer_oai = log_initialize(args, train_device)
+        args.use_openai_test_env = use_openai_test_env
+        args.output_filename = output_filename
 
-    
-    if args.use_ram:
-        model = ActorCriticRam(args.num_stack, train_env.action_space, num_layers=args.num_layers, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
-    else:
-        model = ActorCritic(args.num_stack, train_env.action_space, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
+    model = ActorCritic(args.num_stack, train_env.action_space, hidden_size=args.hidden_size, normalize=args.normalize, name=args.env_name)
     model, optimizer = model_initialize(args, model, train_device)
 
     if args.rank == 0:
@@ -193,50 +188,48 @@ def worker(gpu, ngpus_per_node, args):
 
                 else:
 
-                    if args.use_ram:
-                        args.use_openai_test_env = False
-                        eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
-                        lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
-                        rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
-                        tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
-                        length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
-                        reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
-                        true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
-                        wandb.log({'cule_length_mean':lmean, 'cule_length_median':lmedian, 'cule_length_min':lmin, 'cule_length_max':lmax})
-                        wandb.log({'cule_reward_mean':rmean, 'cule_reward_median':rmedian, 'cule_reward_min':rmin, 'cule_reward_max':rmax})
-                        wandb.log({'cule_true_reward_mean':tmean, 'cule_true_reward_median':tmedian, 'cule_true_reward_min':tmin, 'cule_true_reward_max':tmax})
-                        print('[CuLE CPU] [training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
+                    # args.use_openai_test_env = False
+                    # eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env)
+                    # lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
+                    # rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
+                    # tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
+                    # length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
+                    # reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
+                    # true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
+                    # wandb.log({'cule_length_mean':lmean, 'cule_length_median':lmedian, 'cule_length_min':lmin, 'cule_length_max':lmax})
+                    # wandb.log({'cule_reward_mean':rmean, 'cule_reward_median':rmedian, 'cule_reward_min':rmin, 'cule_reward_max':rmax})
+                    # wandb.log({'cule_true_reward_mean':tmean, 'cule_true_reward_median':tmedian, 'cule_true_reward_min':tmin, 'cule_true_reward_max':tmax})
+                    # print('[CuLE CPU] [training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
 
-                        if eval_csv_writer and eval_csv_file:
-                            eval_csv_writer.writerow([T, total_time, rmean, rmedian, rmin, rmax, rstd, lmean, lmedian, lmin, lmax, lstd])
-                            eval_csv_file.flush()
+                    # if eval_csv_writer and eval_csv_file:
+                    #     eval_csv_writer.writerow([T, total_time, rmean, rmedian, rmin, rmax, rstd, lmean, lmedian, lmin, lmax, lstd])
+                    #     eval_csv_file.flush()
 
-                        if args.plot:
-                            summary_writer.add_scalar('eval/rewards_mean', rmean, T, walltime=total_time)
-                            summary_writer.add_scalar('eval/lengths_mean', lmean, T, walltime=total_time)
+                    # if args.plot:
+                    #     summary_writer.add_scalar('eval/rewards_mean', rmean, T, walltime=total_time)
+                    #     summary_writer.add_scalar('eval/lengths_mean', lmean, T, walltime=total_time)
 
-                    else:
-                        args.use_openai_test_env = True
-                        eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env_oai)
-                        lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
-                        rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
-                        tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
-                        length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
-                        reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
-                        true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
-                        print('[OpAI CPU] [training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
-                        wandb.log({'openai_length_mean':lmean, 'openai_length_median':lmedian, 'openai_length_min':lmin, 'openai_length_max':lmax})
-                        wandb.log({'openai_reward_mean':rmean, 'openai_reward_median':rmedian, 'openai_reward_min':rmin, 'openai_reward_max':rmax})
-                        wandb.log({'openai_true_reward_mean':tmean, 'openai_true_reward_median':tmedian, 'openai_true_reward_min':tmin, 'openai_true_reward_max':tmax})
-                        if eval_csv_writer_oai and eval_csv_file_oai:
-                            eval_csv_writer_oai.writerow([T, total_time, rmean, rmedian, rmin, rmax, rstd, lmean, lmedian, lmin, lmax, lstd])
-                            eval_csv_file_oai.flush()
+                    args.use_openai_test_env = True
+                    eval_lengths, eval_rewards, eval_true_rewards = test(args, model, test_env_oai)
+                    lmean, lmedian, lmin, lmax, lstd = gen_data(eval_lengths)
+                    rmean, rmedian, rmin, rmax, rstd = gen_data(eval_rewards)
+                    tmean, tmedian, tmin, tmax, tstd = gen_data(eval_true_rewards)
+                    length_data = '(length) min/max/mean/median: {lmin:4.1f}/{lmax:4.1f}/{lmean:4.1f}/{lmedian:4.1f}'.format(lmin=lmin, lmax=lmax, lmean=lmean, lmedian=lmedian)
+                    reward_data = '(reward) min/max/mean/median: {rmin:4.1f}/{rmax:4.1f}/{rmean:4.1f}/{rmedian:4.1f}'.format(rmin=rmin, rmax=rmax, rmean=rmean, rmedian=rmedian)
+                    true_reward_data = '(reward) min/max/mean/median: {tmin:4.1f}/{tmax:4.1f}/{tmean:4.1f}/{tmedian:4.1f}'.format(tmin=tmin, tmax=tmax, tmean=tmean, tmedian=tmedian)
+                    print('[OpAI CPU] [training time: {}] {}'.format(format_time(total_time), ' --- '.join([length_data, reward_data])))
+                    wandb.log({'openai_length_mean':lmean, 'openai_length_median':lmedian, 'openai_length_min':lmin, 'openai_length_max':lmax})
+                    wandb.log({'openai_reward_mean':rmean, 'openai_reward_median':rmedian, 'openai_reward_min':rmin, 'openai_reward_max':rmax})
+                    wandb.log({'openai_true_reward_mean':tmean, 'openai_true_reward_median':tmedian, 'openai_true_reward_min':tmin, 'openai_true_reward_max':tmax})
+                    if eval_csv_writer_oai and eval_csv_file_oai:
+                        eval_csv_writer_oai.writerow([T, total_time, rmean, rmedian, rmin, rmax, rstd, lmean, lmedian, lmin, lmax, lstd])
+                        eval_csv_file_oai.flush()
 
-                        if args.plot:
-                            summary_writer_oai.add_scalar('eval/rewards_mean', rmean, T, walltime=total_time)
-                            summary_writer_oai.add_scalar('eval/lengths_mean', lmean, T, walltime=total_time)
+                    if args.plot:
+                        summary_writer_oai.add_scalar('eval/rewards_mean', rmean, T, walltime=total_time)
+                        summary_writer_oai.add_scalar('eval/lengths_mean', lmean, T, walltime=total_time)
 
-                        args.use_openai_test_env = use_openai_test_env
+                    args.use_openai_test_env = use_openai_test_env
 
         start_time = time.time()
 

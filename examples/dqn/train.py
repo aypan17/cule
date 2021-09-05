@@ -273,7 +273,7 @@ def worker(gpu, ngpus_per_node, args):
                 nvtx.range_pop()
 
                 true_reward = reward.detach().clone()  
-                proxy = proxy_reward(reward, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
+                proxy = proxy_reward(reward, None, ram, cached_ram, diver_bonus=args.diver_bonus, o2_pen=args.o2_penalty, bullet_pen=args.bullet_penalty, space_reward=args.space_reward)
 
                 observation = observation.to(device=train_device)
                 reward = proxy.to(device=train_device)
@@ -373,7 +373,7 @@ def worker(gpu, ngpus_per_node, args):
                                              lmean, lmedian, lstd, lmin, lmax])
                         csv_file.flush()
 
-                    torch.save(dqn.online_net.state_dict(), args.model_name+"_"+str(eval_counter)+".pt")
+                    torch.save(dqn.online_net, args.model_name+"_"+str(eval_counter)+".pt")
 
                     if args.plot:
                         writer.add_scalar('eval/rewards', rmean, T)

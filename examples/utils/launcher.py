@@ -59,11 +59,6 @@ def add_global_parser_options(parser):
     parser.add_argument('--use-openai', action='store_true', default=False, help='Use OpenAI Gym environment')
     parser.add_argument('--use-openai-test-env', action='store_true', default=False, help='Use OpenAI Gym test environment')
 
-    # Ram
-    parser.add_argument('--use_ram', action='store_true', default=False, help='Use ram state')
-    parser.add_argument('--num_layers', type=int, default=1, help='Number of layers in model')
-
-
     # Proxy rewards
     parser.add_argument('--diver_bonus', type=float, default=0, help='reward grabbing divers')
     parser.add_argument('--proximity_bonus', type=float, default=0, help='reward being close to divers or bullets')
